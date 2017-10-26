@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Exercíco Crossfilter</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link rel="stylesheet" href="dc.css">
+
+</head>
+  <body>
+    <div class="container">
+    <h1>Exercíco Crossfilter</h1>
+
+    <div class="row">
+        <div id="vSex">
+            <h3>Sexo da Vítima</h3>
+            <span class="reset" style="display: none;">seleciondo: <span class="filter"></span></span>
+            <a class="reset" href="javascript:vSexChart.filterAll();dc.redrawAll();" 
+            style="display: none;">reset</a>
+
+            <div class="clearfix"></div>
+        </div>
+        <div id="weapon">
+            <h3>Arma</h3>
+        </div>
+        <div id="state">
+            <h3>Estado</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div>
+            <div class="dc-data-count">
+                <span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a
+                    href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+            </div>
+        </div>
+        <table class="table table-hover dc-data-table">
+        </table>
+    </div>
+    </div>
+    <script src="crossfilter.js"></script>
+    <script src='d3.js'></script>  
+    <script src="dc.js"></script>
+
+    <script>
+
+        var vSexChart = dc.rowChart('#vSex'),
+            stateChart = dc.rowChart('#state'),
+            weaponChart = dc.rowChart('#weapon'),
+            visCount = dc.dataCount('.dc-data-count'),
+            visTable = dc.dataTable('.dc-data-table');
+        
+        d3.csv('homicide-reports.csv', function(csv){
+            var crime = crossfilter(csv)
+            
+            var yearDim = crime.dimension( d => { return d.year }) 
+            yearDim.filter("2000")
+
+            var vSexDim =  crime.dimension( d => { 
+                if (d.vSex != 'Unknown') {
+                    return d.vSex
+                }
+            })
+            var vSexGroup = vSexDim.group();
+
+            vSexChart
+                .width(500)
+                .dimension(vSexDim)
+                .group(vSexGroup);
+
+            var weaponDim =  crime.dimension( d => { return d.weapon })
+            var weaponGroup = weaponDim.group();
+
+            weaponChart
+                .width(500)
+                .dimension(weaponDim)
+                .group(weaponGroup)
+                .data(group => { return group.top(5) });
+
+            var stateDim = crime.dimension( d => { return d.state })
+            var stateGroup = stateDim.group();
+            
+            stateChart
+                .width(500)
+                .dimension(stateDim)
+                .group(stateGroup)
+                .data(group => { return group.top(10) });                
+
+            var all = crime.groupAll();
+
+            visCount
+                .dimension(crime)
+                .group(all);
+            
+            
+            visTable
+                .dimension(yearDim)
+                .group(d => { return d.year})
+                .columns([
+                    'pSex',
+                    'pAge',
+                    'pRace',
+                    'pEthnicity'
+                ]);
+
+            dc.renderAll();
+        });
+
+    </script>
+
+  </body>
+</html>
